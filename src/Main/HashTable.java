@@ -1,12 +1,15 @@
+package Main;
+
 import java.util.*;
 
 public class HashTable<K extends Comparable<K>, V> implements MapADT<K, V>
 {
-	private ArrayList<List<Entry<K,V>>> listOfBuckets; // Buckets in this case refers to the List of entries, the buckets are to handle collision
-	private final int DEFAULT_SIZE = 101; // 101 is somewhat arbitrary save the fact that it is prime
-	private final float GROW_AT = 0.75f; // Percentage of number of elements versus number of buckets at which the array needs to dynamically grow
-	private final float SHRINK_AT = 0.15f; // Percentage of number of elements versus number of buckets at which the array needs to dynamically shrink
-	private int curNumEntries;
+    // CONSTANTS
+	private final int DEFAULT_SIZE = 101; // 101 is somewhat arbitrary save the fact that it is findNextPrime
+
+    // VARIABLES
+    private LinkedList<Entry<K,V>>[] listOfBuckets; // Buckets in this case refers to the List of entries, the buckets are to handle collision
+    private int curNumEntries;
 	private int hashTableSize; // I believe that is number of buckets
 	private long modCounter; // Used with the iterator to handle an edge case where someone might try add or delete elements while simultaneously using an iterator
 
@@ -16,15 +19,15 @@ public class HashTable<K extends Comparable<K>, V> implements MapADT<K, V>
 		curNumEntries = 0;
 		modCounter = 0;
 		hashTableSize = DEFAULT_SIZE;
-		listOfBuckets = new ArrayList<>(DEFAULT_SIZE);
-		
-		for (int i = 0; i < hashTableSize; i++)
+
+        listOfBuckets = new LinkedList[DEFAULT_SIZE];
+        for (int i = 0; i < hashTableSize; i++)
 		{
-			listOfBuckets.add(new LinkedList<>());
+			listOfBuckets[i] = new LinkedList<>();
 		}
 	}
 	
-//	public HashTable(MapADT<K,V> inputMap)
+//	public Main.HashTable(Main.MapADT<K,V> inputMap)
 //	{
 //		this();
 //
@@ -34,9 +37,9 @@ public class HashTable<K extends Comparable<K>, V> implements MapADT<K, V>
 //		}
 //	}
 
-	// INPUT: initNum is the initial number to begin looking for the next prime from
-	// OUTPUT: the next prime number after initNum
-	private int prime(int initNum)
+	// INPUT: initNum is the initial number to begin looking for the next findNextPrime from
+	// OUTPUT: the next findNextPrime number after initNum
+	private int findNextPrime(int initNum)
 	{
 		boolean isPrime = false;
 
@@ -59,17 +62,13 @@ public class HashTable<K extends Comparable<K>, V> implements MapADT<K, V>
 					}
 					else
 					{
-						// Do not break, must be sure that initNum is prime for all instances of i in this loop
+						// Do not break, must be sure that initNum is findNextPrime for all instances of i in this loop
 						isPrime = true;
 					}
 				}
 			}
-			else
-			{
-				isPrime = false;
-			}
 		}
-		while(isPrime != true);
+		while(!isPrime);
 
 		return initNum;
 	}
@@ -77,12 +76,13 @@ public class HashTable<K extends Comparable<K>, V> implements MapADT<K, V>
 	@Override
 	public boolean contains(K key)
 	{
-		return listOfBuckets.get(getHashCode(key)).contains(new Entry<K,V>(key,null));
+		return listOfBuckets[getHashCode(key)].contains(new Entry<K,V>(key,null));
 	}
 
 	private int getHashCode(K k)
 	{
-		return (k.hashCode() & 0x7FFFFFFF) % hashTableSize;
+		return (k.hashCode() & 0x7FFFFFFF) % hashTableSize; // modulo with the hashtablesize to turn the hashcode into a valid index
+		// by "valid" i mean can access an array of size: hashTableSize
 	}
 
 	@Override
@@ -95,84 +95,83 @@ public class HashTable<K extends Comparable<K>, V> implements MapADT<K, V>
 		
 		growCheck();
 		
-		if(listOfBuckets.get(getHashCode(key)).contains(new Entry<K,V>(key,null)))
+		if(listOfBuckets[getHashCode(key)].contains(new Entry<K,V>(key,null)))
 		{
 			Entry<K,V> tmp = new Entry<>(key,getValue(key));
-			listOfBuckets.get(getHashCode(key)).remove(new Entry<>(key,getValue(key)));
-			listOfBuckets.get(getHashCode(key)).add(new Entry<>(key,value));
+			listOfBuckets[getHashCode(key)].remove(new Entry<>(key,getValue(key)));
+			listOfBuckets[getHashCode(key)].add(new Entry<>(key,value));
 			modCounter++;
 			return tmp.value; 
 		}
 		
-		listOfBuckets.get(getHashCode(key)).add(new Entry<>(key,value));
+		listOfBuckets[getHashCode(key)].add(new Entry<>(key,value));
 		curNumEntries++;
 		modCounter++;
 		
 		return null;
 	}
-	
-	/**
-	 * copy Key,Value pairs into a temporary array list, double tablesize
-	 * and find nearest prime number, reconstruct buckets to size of table size
-	 * add all of the key,value pairs back into buckets
-	 */
+
 	private void growCheck()
 	{
-		if(((float)curNumEntries / (float)hashTableSize) >= GROW_AT)
+        // Percentage of number of elements versus number of buckets at which the array needs to dynamically grow
+        float growAmount = 0.75f;
+        if(((float)curNumEntries / (float)hashTableSize) >= growAmount)
 		{
 			List<Entry<K,V>> tmpList;
 			tmpList = new ArrayList<>(curNumEntries);
 
-			for (int i = 0; i < hashTableSize; i++)
+			for (LinkedList<Entry<K,V>> list : listOfBuckets)
 			{
-				for (Entry<K,V> n : listOfBuckets.get(i))
+				for (Entry<K,V> n : list)
 				{
 					tmpList.add(new Entry<K,V>(n.key,n.value));
 				}
 			}
 
-			hashTableSize = prime(2*hashTableSize);
-			listOfBuckets = new ArrayList<>(hashTableSize);
+			hashTableSize = findNextPrime(2*hashTableSize);
+			listOfBuckets = new LinkedList[hashTableSize];
 
 			for(int j =0; j<hashTableSize;j++)
 			{
-				listOfBuckets.add(new LinkedList<>());
+				listOfBuckets[j] = new LinkedList<>();
 			}
 
 			for (int k =0; k< curNumEntries;k++)
 			{
-				listOfBuckets.get(getHashCode(tmpList.get(k).key)).add(new Entry<>(tmpList.get(k).key,tmpList.get(k).value));
+				listOfBuckets[getHashCode(tmpList.get(k).key)].add(new Entry<>(tmpList.get(k).key,tmpList.get(k).value));
 			}
 		}
 	}
 
 	private void shrinkCheck()
 	{
-		if (((float)curNumEntries / (float)hashTableSize) <= SHRINK_AT)
+        // Percentage of number of elements versus number of buckets at which the array needs to dynamically shrink
+        float shrinkAmount = 0.15f;
+        if (((float)curNumEntries / (float)hashTableSize) <= shrinkAmount)
 		{
 			List<Entry<K,V>> tmpList = new ArrayList<>(curNumEntries);
 
 			for (int i = 0; i<hashTableSize;i++)
 			{
-				for (Entry<K,V> n : listOfBuckets.get(i))
+				for (Entry<K,V> n : listOfBuckets[i])
 				{
 					tmpList.add(new Entry<>(n.key,n.value));
 				}
 			}
 
-			hashTableSize = prime(hashTableSize / 2); // we want hashTableSize to be prime since it is used as part of
+			hashTableSize = findNextPrime(hashTableSize / 2); // we want hashTableSize to be findNextPrime since it is used as part of
 			// the hashing function, and primes have a lower chance of causing collisions
 
-			listOfBuckets = new ArrayList<>(hashTableSize);
+			listOfBuckets = new LinkedList[hashTableSize];
 
 			for(int j = 0; j < hashTableSize; j++)
 			{
-				listOfBuckets.add(new LinkedList<>());
+				listOfBuckets[j] = new LinkedList<>();
 			}
 
 			for (int k = 0; k < curNumEntries; k++)
 			{
-				listOfBuckets.get(getHashCode(tmpList.get(k).key)).add(new Entry<>(tmpList.get(k).key,tmpList.get(k).value));
+				listOfBuckets[getHashCode(tmpList.get(k).key)].add(new Entry<>(tmpList.get(k).key,tmpList.get(k).value));
 			}
 		}
 	}
@@ -180,13 +179,12 @@ public class HashTable<K extends Comparable<K>, V> implements MapADT<K, V>
 	@Override
 	public boolean delete(K key) 
 	{
-		// possibly get rid of buckets[getHashCode(key)].indexOf(  instead of passing null passin getValue(key)
 		if (null == key)
 		{
 			return false;
 		}
 
-		boolean tmpBool = listOfBuckets.get(getHashCode(key)).remove(new Entry<>(key,getValue(key)));
+		boolean tmpBool = listOfBuckets[getHashCode(key)].remove(new Entry<>(key,getValue(key)));
 
 		if(tmpBool)
 		{
@@ -199,17 +197,16 @@ public class HashTable<K extends Comparable<K>, V> implements MapADT<K, V>
 	@Override
 	public V getValue(K key) 
 	{
-		if (key == null)
-		{
-			return null;
+		V value = null;
+		if (key != null) {
+			for (Entry<K, V> entry : listOfBuckets[getHashCode(key)]) {
+				if (entry.key.compareTo(key) == 0) {
+					value = entry.value;
+					break;
+				}
+			}
 		}
-		Entry<K, V> tmp = listOfBuckets.get(getHashCode(key)).get(listOfBuckets.get(getHashCode(key)).indexOf(new Entry<K,V>(key,null)));
-
-		if (tmp == null)
-		{
-			return null;
-		}
-		return tmp.value;
+		return value;
 	}
 
 	@Override
@@ -221,7 +218,7 @@ public class HashTable<K extends Comparable<K>, V> implements MapADT<K, V>
 		}
 		for (int i = 0; i < hashTableSize; i++)
 		{
-			for (Entry<K,V> n : listOfBuckets.get(i))
+			for (Entry<K,V> n : listOfBuckets[i])
 			if (n.value == value)
 			{
 				return n.key;
@@ -248,11 +245,11 @@ public class HashTable<K extends Comparable<K>, V> implements MapADT<K, V>
 		curNumEntries = 0;
 		modCounter = 0;
 		hashTableSize = DEFAULT_SIZE;
-		listOfBuckets = new ArrayList<>(hashTableSize);
+		listOfBuckets = new LinkedList[hashTableSize];
 
 		for(int i = 0; i < hashTableSize; i++)
 		{
-			listOfBuckets.add(new LinkedList<>());
+			listOfBuckets[i] = new LinkedList<>();
 		}
 	}
 
@@ -279,10 +276,11 @@ public class HashTable<K extends Comparable<K>, V> implements MapADT<K, V>
 		{
 			nodes = new ArrayList<>(curNumEntries);
 			idx = 0;
+			modCheck = modCounter;
 
 			for(int i = 0; i < hashTableSize; i++)
 			{
-				nodes.addAll(listOfBuckets.get(i));
+				nodes.addAll(listOfBuckets[i]);
 			}
 		}
 		
@@ -314,7 +312,6 @@ public class HashTable<K extends Comparable<K>, V> implements MapADT<K, V>
 		{
 			return nodes.get(idx++).getKey();
 		}
-
 	}
 
 	private class ValueIteratorHelper extends IteratorHelper<V>
@@ -365,6 +362,7 @@ public class HashTable<K extends Comparable<K>, V> implements MapADT<K, V>
 			return compareTo((Entry<K,V>) o) == 0;
 		}
 
+		@Override
 		public String toString() {
 			return "" + key;
 		}

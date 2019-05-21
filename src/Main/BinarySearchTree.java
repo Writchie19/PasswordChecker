@@ -1,10 +1,26 @@
+package Main;
+
 import java.util.Iterator;
+
+// List of TODO's
+//-------------------------------
+// TODO: Fix current compilation errors ~ line 387
+// TODO: fix all hiding and unchecked warnings, and other warnings
+// TODO: Add more comments
+// TODO: Check variable names, scope: methods
+// TODO: Check variable names, scope: Global class
+// TODO: Probably add another constrcutor or two
+// TODO: Check Syntax style for consistancy
+// ----------------------------------------------
+
+
 
 public class BinarySearchTree<K extends Comparable<K>,V> implements MapADT<K, V>
 {
 	Node<K,V> root;
 	private boolean answerFound;
 	private int size;
+
 	public BinarySearchTree()
 	{
 		root = null;
@@ -373,7 +389,7 @@ public class BinarySearchTree<K extends Comparable<K>,V> implements MapADT<K, V>
 			return;
 		}
 		inorderFillArray(n.leftChild);
-		array[iterIndex++] = n;
+		//array[iterIndex++] = n;
 		inorderFillArray(n.rightChild);
 	}
 }

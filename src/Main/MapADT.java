@@ -1,5 +1,9 @@
+package Main;
+
 import java.util.Iterator;
-public interface MapADT<K extends Comparable<K>, V> {
+
+public interface MapADT<K extends Comparable<K>, V>
+{
   /**   
    * Returns true if the map has an object for the corresponding key.   
    * @param key object to search for   
