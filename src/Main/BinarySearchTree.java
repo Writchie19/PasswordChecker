@@ -1,54 +1,38 @@
 package Main;
 
+import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 
-// List of TODO's
-//-------------------------------
-// TODO: Fix current compilation errors ~ line 387
-// TODO: fix all hiding and unchecked warnings, and other warnings
-// TODO: Add more comments
-// TODO: Check variable names, scope: methods
-// TODO: Check variable names, scope: Global class
-// TODO: Probably add another constrcutor or two
-// TODO: Check Syntax style for consistancy
-// ----------------------------------------------
-
-
-
-public class BinarySearchTree<K extends Comparable<K>,V> implements MapADT<K, V>
-{
-	Node<K,V> root;
-	private boolean answerFound;
+public class BinarySearchTree<K extends Comparable<K>,V extends Comparable<V>> implements MapADT<K, V> {
+	private Node<K,V> root;
 	private int size;
+	private int modCounter;
 
-	public BinarySearchTree()
-	{
+	public BinarySearchTree() {
 		root = null;
-		size=0;
+		size = 0;
+		modCounter = 0;
 	}
 	
-	public BinarySearchTree(MapADT<K,V> obj)
-	{
-		
-	}
+//	public BinarySearchTree(MapADT<K,V> obj)
+//	{
+//
+//	}
 	
-	@SuppressWarnings("hiding")
-	class Node<K extends Comparable<K>, V>
-	{
+	class Node<K extends Comparable<K>, V> {
 		public K key;
 		public V value;
-		public Node leftChild;
-		public Node rightChild;
+		public Node<K,V> leftChild;
+		public Node<K,V> rightChild;
 		
-		public Node(K k, V v)
-		{
+		public Node(K k, V v) {
 			key = k;
 			value = v;
 			leftChild = rightChild = null;
 		}
 		
-		public int numChildren()
-		{
+		public int numChildren() {
 			if (leftChild == null & rightChild ==null)
 			{
 				return 0;
@@ -57,7 +41,7 @@ public class BinarySearchTree<K extends Comparable<K>,V> implements MapADT<K, V>
 			{
 				return 1;
 			}
-			else if (rightChild == null & leftChild != null)
+			else if (rightChild == null)
 			{
 				return 1;
 			}
@@ -65,232 +49,203 @@ public class BinarySearchTree<K extends Comparable<K>,V> implements MapADT<K, V>
 			{
 				return 2;
 			}
-			
 		}
 	}
 
 	@Override
-	public boolean contains(K key)
-	{
-		
-		return hasKey(key,root);
-	}
-	
-	
-
-	private boolean hasKey(K key,Node<K,V> n) 
-	{
-		if (n==null)
-		{
-			return false;
-		}
-		if((key).compareTo(n.key) < 0) //left out cast to Comparable<K>
-		{
-			return hasKey(key, n.leftChild);
-		}
-		else if ((key).compareTo(n.key) > 0 )
-		{
-			return hasKey(key, n.rightChild);
-		}
-		else 
-		{
-			return true;
-		}
+	public boolean contains(K key) {
+		return findValue(key, root) != null;
 	}
 
 	@Override
-	public V add(K key, V value) 
-	{
-		if(contains(key))
-		{
-			V tmpVal = getValue(key);
-			replaceVal(key,value,root);
-			return tmpVal;
+	public V add(K key, V value) {
+		V tmpValue = null;
+
+		if(root == null) {
+			root = new Node<>(key,value);
 		}
-		if(root == null)
-		{
-			root = new Node<K,V>(key,value);
+		else {
+			tmpValue = insert(key,value,root,null,false);
 		}
-		else
-		{
-			insert(key,value,root,null,false);
-		}
+
 		size++;
-		return null;
+		modCounter++;
+		return tmpValue;
 	}
 
-	@SuppressWarnings("unchecked")
-	private void replaceVal(K key, V value,Node<K, V> n)
-	{
-		if (n==null)
-		{
-			return;
+	private V insert(K key, V value,Node<K, V> n, Node<K,V> parent, boolean wasLeft) {
+		if(n == null) { // Reached the bottom of the tree
+			if(wasLeft) {
+				parent.leftChild = new Node<>(key,value);
+			}
+			else {
+				parent.rightChild = new Node<>(key,value);
+			}
+			return null;
 		}
-		if((key).compareTo(n.key) < 0) //left out cast to Comparable<K>
-		{
-			replaceVal(key,value, n.leftChild);
+		else if(key.compareTo(n.key) < 0) {
+			return insert(key,value,n.leftChild,n,true);
 		}
-		else if ((key).compareTo(n.key) > 0 )
-		{
-			replaceVal(key,value, n.rightChild);
+		else if (key.compareTo(n.key) > 0){
+			return insert(key,value,n.rightChild,n,false);
 		}
-		else
-		{
+		else { // If there are duplicate keys, replace the current key's value with the new one and return the old value
+			V tmpValue = n.value;
 			n.value = value;
+			return tmpValue;
 		}
 	}
 
-	private void insert(K key, V value,Node<K, V> n, Node<K,V> parent, boolean wasLeft)
-	{
-		if(n==null)
-		{
-			if(wasLeft)
-			{
-				parent.leftChild = new Node<K,V>(key,value);
-			}
-			else
-			{
-				parent.rightChild = new Node<K,V>(key,value);
-			}
-		}
-		else if((key).compareTo((K)n.key)<0)
-		{
-			insert(key,value,n.leftChild,n,true);
-		}
-		else
-		{
-			insert(key,value,n.rightChild,n,false);
-		}
-	}
-
-	@SuppressWarnings("unchecked")
 	@Override
-	public boolean delete(K key)
-	{
-		int tmpNumChildren;
-		Node<K,V> tmpParent;
-		Node<K,V> node;
-		if(key==null)
-		{
+	public boolean delete(K key) {
+		if(key == null) {
 			return false;
 		}
-		if(contains(key)==false)
-		{
+
+		if (root == null) {
 			return false;
 		}
 		
-		//EACH case must check to see if the key is the root node; if true then must reset root node
-		if (key == root.key)
-		{
-			if (root.numChildren()==0)
-			{
-				root=null;
+		// Special case where the node to delete is the root node
+		if (key.compareTo(root.key) == 0) {
+			if (root.numChildren() == 0) {
+				root = null;
 			}
-			else
-			{
-				//do some other stuff
-			}
-		}
-		//Find key: then check for number of children, apply case as appropriate
-		node = findNode(key,root,false);
-		tmpNumChildren = node.numChildren();
-		//case 1: NO children
-		// set appropriate parent pointer(left or right child which is the key) to null
-		// above is done by keeping track if went left or not
-		if (tmpNumChildren == 0)
-		{
-			replaceNode(node,null);
-		}
-		
-		
-		//case 2: One child
-		//must check which child (left or right) but does not matter which child it is
-		//replace parent node with child node
-		else if (tmpNumChildren == 1)
-		{
-			if (node.leftChild!=null)
-			{
-				node=node.leftChild;
-				//replace parent with leftchild
-			}
-			else
-			{
-				node=node.rightChild;
-				//replace parent with right child
-			}
-		}
-		
-		//case 3: two children
-		//Comments: cannot replace node to be deleted with one of its children b/c there are two and cannot quarantee
-		//ordering property of tree will remain intact, also structural property may be violated b/c node may be 
-		//orphaned: so turn into case with deletion of one child
-		//Steps:
-		//find inorder successor(go to right one and then left as far as possible)
-		// comment: cannot have two children b/c it cannot have a left child or else that left child would be the in order successor
-		//Overwrite node to be deleted with a copy of the inorder successor
-		//Remove previous inorder Successor node OR replace with its single child if it has one
-		else if (tmpNumChildren == 2)
-		{
-			Node<K,V> tmpNode = findInorderSuc(key);
-			
-			if(tmpNode.numChildren()==0)
-			{
-				findInorderSuc(key).key=null;
-				findInorderSuc(key).value=null;
-			}
-			else
-			{
-				if (tmpNode.leftChild!=null)
-				{
-					findInorderSuc(key).key=(K) tmpNode.leftChild.key;
-					findInorderSuc(key).value=(V) tmpNode.leftChild.value;
-					
-					//replace parent with leftchild
+			else if (root.numChildren() == 1){
+				if (root.leftChild != null) {
+					root = root.leftChild;
 				}
-				else
-				{
-					findInorderSuc(key).key=(K) tmpNode.rightChild.key;
-					findInorderSuc(key).value=(V) tmpNode.rightChild.value;
-					//replace parent with right child
+				else {
+					root = root.rightChild;
 				}
 			}
-			node.key = tmpNode.key;
-			node.value = tmpNode.value;
+			else {
+				Node<K,V> successor = findInorderSuc(root.rightChild, root, false); // This is the new root
+				successor.leftChild = root.leftChild;
+				successor.rightChild = root.rightChild;
+				root = successor;
+			}
+		}
+		else {
+			Node<K,V> nodeToDelete;
+			Node<K,V> parent = findParent(key, root,null);
+			if(parent == null) { // The key is not in the tree
+				return false;
+			}
+
+			if (parent.leftChild.key.compareTo(key) == 0) { // Get a reference to the desired node
+				nodeToDelete = parent.leftChild;
+			}
+			else {
+				nodeToDelete = parent.rightChild;
+			}
+			//Find key: then check for number of children, apply case as appropriate
+			//case 1: NO children
+			// set appropriate parent pointer(left or right child which is the key) to null
+			// above is done by keeping track if went left or not
+			if (nodeToDelete.numChildren() == 0) {
+				if (parent.leftChild.key.compareTo(key) == 0) {
+					parent.leftChild = null;
+				} else {
+					parent.rightChild = null;
+				}
+			}
+
+
+			//case 2: One child
+			//must check which child (left or right) but does not matter which child it is
+			//replace parent node with child node
+			else if (nodeToDelete.numChildren() == 1) {
+				if (nodeToDelete.leftChild != null) {
+					if (parent.leftChild.key.compareTo(key) == 0) {
+						parent.leftChild = nodeToDelete.leftChild;
+					}
+					else {
+						parent.rightChild = nodeToDelete.leftChild;
+					}
+				} else {
+					if (parent.leftChild.key.compareTo(key) == 0) {
+						parent.leftChild = nodeToDelete.rightChild;
+					}
+					else {
+						parent.rightChild = nodeToDelete.rightChild;
+					}
+				}
+			}
+
+			// case 3: two children
+			// find inorder successor(go to right one and then left as far as possible)
+			// comment: cannot have two children or a left child, else that left child would be the in order successor
+			else if (nodeToDelete.numChildren() == 2) {
+				Node<K, V> successor = findInorderSuc(nodeToDelete.rightChild, nodeToDelete, false);
+				if (parent.leftChild.key.compareTo(key) == 0) {
+					parent.leftChild = successor;
+				}
+				else {
+					parent.rightChild = successor;
+				}
+				successor.leftChild = nodeToDelete.leftChild;
+				successor.rightChild = nodeToDelete.rightChild;
+			}
 		}
 		size--;
+		modCounter++;
 		return true;
 	}
 
-	private Node<K,V> findInorderSuc(K key) 
-	{
-		//go right from key, then until hit null(as far as can go)
-		return root;
-			
+	private Node<K,V> findInorderSuc(Node<K,V> n, Node<K,V> parent, Boolean wasLeft) {
+		if (n.numChildren() == 2) {
+			return findInorderSuc(n.leftChild, n, true);
+		}
+		else if (n.numChildren() == 1) {
+			if (wasLeft) {
+				if (n.leftChild != null) {
+					parent.leftChild = n.leftChild;
+				} else {
+					parent.leftChild = n.rightChild;
+				}
+			}
+			else {
+				if (n.leftChild != null) {
+					parent.rightChild = n.leftChild;
+				} else {
+					parent.rightChild = n.rightChild;
+				}
+			}
+		}
+		else {
+			if (wasLeft) {
+				if (n.leftChild != null) {
+					parent.leftChild = null;
+				} else {
+					parent.leftChild = null;
+				}
+			}
+			else {
+				if (n.leftChild != null) {
+					parent.rightChild = null;
+				} else {
+					parent.rightChild = null;
+				}
+			}
+		}
+		return n;
 	}
 
-	private void replaceNode(Node<K,V> node, Node<K,V> newNode)
-	{
-		//make sure parent nodes point to the right place
-		
-	}
-
-	private Node<K,V> findNode(K key,Node<K,V> n,boolean wasLeft)
-	{
-		if (n==null)
-		{
+	// If a node with the specified key is found, then return its parent, else return null
+	private Node<K,V> findParent(K key,Node<K,V> n, Node<K,V> parent) {
+		if (n == null) {
 			return null;
 		}
-		if((key).compareTo(n.key) < 0) //left out cast to Comparable<K>
-		{
-			return (Node<K,V>)findNode(key, n.leftChild,true);
+
+		if(key.compareTo(n.key) < 0) {
+			return findParent(key, n.leftChild, n);
 		}
-		else if ((key).compareTo(n.key) > 0 )
-		{
-			return (Node<K,V>)findNode(key, n.rightChild,false);
+		else if (key.compareTo(n.key) > 0 ) {
+			return findParent(key, n.rightChild, n);
 		}
-		else
-		{
-			return n;
+		else {
+			return parent;
 		}
 	}
 
@@ -300,96 +255,131 @@ public class BinarySearchTree<K extends Comparable<K>,V> implements MapADT<K, V>
 		return findValue(key,root);
 	}
 	
-	@SuppressWarnings("unchecked")
-	private V findValue(K  key, Node<K,V> n)
-	{
-		if (n==null)
-		{
+	private V findValue(K  key, Node<K,V> n) {
+		if (n == null) {
 			return null;
 		}
-		if((key).compareTo(n.key) < 0) //left out cast to Comparable<K>
-		{
-			return (V) findValue(key, n.leftChild);
+		if(key.compareTo(n.key) < 0) {
+			return findValue(key, n.leftChild);
 		}
-		else if ((key).compareTo(n.key) > 0 )
-		{
-			return (V) findValue(key, n.rightChild);
+		else if (key.compareTo(n.key) > 0 ) {
+			return findValue(key, n.rightChild);
 		}
-		else
-		{
-			return (V) n.value;
+		else {
+			return n.value;
 		}
 	}
 
 	@Override
-	public K getKey(V value)
-	{
-		answerFound = false;
-		return findKey(value,root,null);
+	public K getKey(V value) {
+		return findKey(value,root);
 	}
 
-	@SuppressWarnings("unchecked")
-	private K findKey(V value, Node<K, V> n,Node<K,V> parent) 
-	{
-		if (n==null)
-		{
+	private K findKey(V value, Node<K, V> n) {
+		if (n == null) {
 			return null;
 		}
-		if(((Comparable<V>) value).compareTo(n.value) == 0) //left out cast to Comparable<K>
-		{
-			answerFound = true;
-			return (K) n.key;
+
+		K key = findKey(value, n.leftChild);
+		if (key != null) {
+			return key;
 		}
-		else if (answerFound == false)
-		{
-			findKey(value, n.leftChild,n);
+
+		if (value.compareTo(n.value) == 0) {
+			return n.key;
 		}
-		if(answerFound == false)
-		{
-			findKey(value,n.rightChild,n);
+
+		key = findKey(value, n.rightChild);
+		if (key != null) {
+			return key;
 		}
 		return null;
 	}
 
 	@Override
-	public int size() 
-	{
+	public int size() {
 		return size;
 	}
 
 	@Override
-	public boolean isEmpty()
-	{
-		return size<1;
+	public boolean isEmpty() {
+		return size < 1;
 	}
 
 	@Override
-	public void clear()
-	{
-		root=null;
-		size=0;
+	public void clear() {
+		root = null;
+		size = 0;
+		modCounter++;
 	}
 
 	@Override
 	public Iterator<K> keys() {
-		// TODO Auto-generated method stub
-		return null;
+		return new KeyIteratorHelper();
 	}
 
 	@Override
 	public Iterator<V> values() {
-		// TODO Auto-generated method stub
-		return null;
+		return new ValueIteratorHelper();
 	}
 
-	private void inorderFillArray(Node<K,V> n)
-	{
-		if(n==null)
-		{
-			return;
+	private abstract class IteratorHelper<E> implements Iterator<E> {
+		protected ArrayList<Node<K,V>> auxNodeArray;
+		protected int idx;
+		protected long modCheck;
+
+		public IteratorHelper() {
+			auxNodeArray = new ArrayList<>(size);
+			inorderFillArray(root); // Fills the auxillary array with the nodes in the BST inorder
+			idx = 0;
+			modCheck = modCounter;
+
 		}
-		inorderFillArray(n.leftChild);
-		//array[iterIndex++] = n;
-		inorderFillArray(n.rightChild);
+
+		public boolean hasNext() {
+			if(modCheck != modCounter)
+			{
+				throw new ConcurrentModificationException();
+			}
+			return idx < size;
+		}
+
+		public abstract E next();
+
+		public void remove()
+		{
+			throw new UnsupportedOperationException();
+		}
+
+		private void inorderFillArray(Node<K,V> n) { // Inorder traversal of the BST
+			if(n == null) {
+				return;
+			}
+
+			inorderFillArray(n.leftChild);
+			auxNodeArray.add(n);
+			inorderFillArray(n.rightChild);
+		}
+	}
+
+	private class KeyIteratorHelper extends IteratorHelper<K> {
+		public KeyIteratorHelper()
+		{
+			super();
+		}
+
+		public K next()
+		{
+			return auxNodeArray.get(idx++).key;
+		}
+	}
+
+	private class ValueIteratorHelper extends IteratorHelper<V> {
+		public ValueIteratorHelper()
+		{
+			super();
+		}
+
+		public V next() { return auxNodeArray.get(idx++).value; }
 	}
 }

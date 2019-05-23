@@ -6,8 +6,9 @@ import java.util.*;
 // TODO: TEST DYNAMIC RESIZING
 
 public class UnitTester {
-	public static void main(String args[])
-	{
+	private static MapADT<String, Integer> map = new BinarySearchTree<>();
+
+	public static void main(String args[]) {
 		test_Add_Size_Clear(); // does not check if the elements added are correct or not
 		test_Add_Contains();
 		test_Add_GetKey_GetValue();
@@ -16,7 +17,6 @@ public class UnitTester {
 	}
 
 	public static void test_Iterators() {
-		MapADT<String, Integer> map = new HashTable<>();
 		String[] str = {"carl","bob","fred","george"};
 		Integer[] ints = {1, 3, 5, 7};
 
@@ -33,6 +33,11 @@ public class UnitTester {
 			Iterator<String> keysIter = map.keys();
 			Iterator<Integer> valuesIter = map.values();
 			String previousKey = null;
+
+			if (keysIter == null || valuesIter == null) {
+				System.out.println("FAIL: test_Iterators: KEYS / VALUES / NULL ITERATORS");
+				return;
+			}
 
 			while (keysIter.hasNext() && valuesIter.hasNext()) {
 				String key = keysIter.next();
@@ -69,14 +74,14 @@ public class UnitTester {
 		catch (Exception e) {
 			e.printStackTrace();
 		}
+		map.clear();
 		System.out.println("SUCCESS ITERATORS");
 	}
 
 	public static void test_Delete() {
-		MapADT<String, Integer> map = new HashTable<>();
 		String[] str = {"carl","bob","fred","george"};
 		Integer[] ints = {1, 3, 5, 7};
-		int idxElementToDelete = 0;
+		int idxElementToDelete = 2;
 
 		try {
 			for (int i = 0; i < str.length; i++) {
@@ -89,7 +94,6 @@ public class UnitTester {
 
 		try {
 			map.delete(str[idxElementToDelete]);
-
 			if (map.contains(str[idxElementToDelete])) {
 				System.out.println("FAIL: test_Delete: DELETE / CONTAINS");
 				return;
@@ -151,11 +155,11 @@ public class UnitTester {
 		catch (Exception e) {
 			e.printStackTrace();
 		}
+		map.clear();
 		System.out.println("SUCCESS DELETE");
 	}
 
 	public static void test_Add_GetKey_GetValue() {
-		MapADT<String, Integer> map = new HashTable<>();
 		String[] str = {"carl","bob","fred","george"};
 		Integer[] ints = {1, 3, 5, 7};
 		try {
@@ -183,11 +187,11 @@ public class UnitTester {
 		catch (Exception e) {
 			e.printStackTrace();
 		}
+		map.clear();
 		System.out.println("SUCCESS ADD_GETKEY_GETVALUE");
 	}
 
 	public static void test_Add_Contains() {
-		MapADT<String, Integer> map = new HashTable<>();
 		String[] str = {"carl","bob","fred","george"};
 		Integer[] ints = {1, 3, 5, 7};
 		try {
@@ -210,11 +214,11 @@ public class UnitTester {
 		catch (Exception e) {
 			e.printStackTrace();
 		}
+		map.clear();
 		System.out.println("SUCCESS: ADD_CONTAINS");
 	}
 
 	public static void test_Add_Size_Clear() {
-		MapADT<String, Integer> map = new HashTable<>();
 		String[] str = {"carl","bob","fred","george"};
 		Integer[] ints = {1, 3, 5, 7};
 		try {
@@ -251,6 +255,7 @@ public class UnitTester {
 		catch (Exception e) {
 			e.printStackTrace();
 		}
+		map.clear();
 		System.out.println("SUCCESS ADD_SIZE_CLEAR");
 	}
 }

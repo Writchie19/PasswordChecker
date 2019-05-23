@@ -2,10 +2,9 @@ package Main;
 
 import java.util.*;
 
-public class HashTable<K extends Comparable<K>, V> implements MapADT<K, V>
-{
+public class HashTable<K extends Comparable<K>, V> implements MapADT<K, V> {
     // CONSTANTS
-	private final int DEFAULT_SIZE = 101; // 101 is somewhat arbitrary save the fact that it is findNextPrime
+	private final int DEFAULT_SIZE = 101; // 101 is somewhat arbitrary save the fact that it is a prime number
 
     // VARIABLES
     private LinkedList<Entry<K,V>>[] listOfBuckets; // Buckets in this case refers to the List of entries, the buckets are to handle collision
@@ -14,15 +13,13 @@ public class HashTable<K extends Comparable<K>, V> implements MapADT<K, V>
 	private long modCounter; // Used with the iterator to handle an edge case where someone might try add or delete elements while simultaneously using an iterator
 
 	
-	public HashTable()
-	{
+	public HashTable() {
 		curNumEntries = 0;
 		modCounter = 0;
 		hashTableSize = DEFAULT_SIZE;
 
         listOfBuckets = new LinkedList[DEFAULT_SIZE];
-        for (int i = 0; i < hashTableSize; i++)
-		{
+        for (int i = 0; i < hashTableSize; i++) {
 			listOfBuckets[i] = new LinkedList<>();
 		}
 	}
@@ -39,29 +36,23 @@ public class HashTable<K extends Comparable<K>, V> implements MapADT<K, V>
 
 	// INPUT: initNum is the initial number to begin looking for the next findNextPrime from
 	// OUTPUT: the next findNextPrime number after initNum
-	private int findNextPrime(int initNum)
-	{
+	private int findNextPrime(int initNum) {
 		boolean isPrime = false;
 
-		do 
-		{
+		do {
 			initNum++; // Become the next number to check
 
 			// Immediately fail if the number is even
-			if (initNum % 2 != 0)
-			{
+			if (initNum % 2 != 0) {
 				// start at 3 (since 1 is useless and 2 has already been checked for) then loop until sqrt(initNum) [this
 				// is because checking the numbers after sqrt(initNum) is redundant), each loop increment by 2 keeping the
 				// i number (that is being used to modulo initNum with) from becoming an even number
-				for (int i = 3; i <= (int)Math.sqrt(initNum); i += 2)
-				{
-					if (initNum % i == 0)
-					{
+				for (int i = 3; i <= (int)Math.sqrt(initNum); i += 2) {
+					if (initNum % i == 0) {
 						isPrime = false;
 						break;
 					}
-					else
-					{
+					else {
 						// Do not break, must be sure that initNum is findNextPrime for all instances of i in this loop
 						isPrime = true;
 					}
@@ -74,29 +65,24 @@ public class HashTable<K extends Comparable<K>, V> implements MapADT<K, V>
 	}
 	
 	@Override
-	public boolean contains(K key)
-	{
+	public boolean contains(K key) {
 		return listOfBuckets[getHashCode(key)].contains(new Entry<K,V>(key,null));
 	}
 
-	private int getHashCode(K k)
-	{
+	private int getHashCode(K k) {
 		return (k.hashCode() & 0x7FFFFFFF) % hashTableSize; // modulo with the hashtablesize to turn the hashcode into a valid index
 		// by "valid" i mean can access an array of size: hashTableSize
 	}
 
 	@Override
-	public V add(K key, V value) 
-	{
-		if(null == key)
-		{
+	public V add(K key, V value) {
+		if(null == key) {
 			return null;
 		}
 		
 		growCheck();
 		
-		if(listOfBuckets[getHashCode(key)].contains(new Entry<K,V>(key,null)))
-		{
+		if(listOfBuckets[getHashCode(key)].contains(new Entry<K,V>(key,null))) {
 			Entry<K,V> tmp = new Entry<>(key,getValue(key));
 			listOfBuckets[getHashCode(key)].remove(new Entry<>(key,getValue(key)));
 			listOfBuckets[getHashCode(key)].add(new Entry<>(key,value));
@@ -111,19 +97,15 @@ public class HashTable<K extends Comparable<K>, V> implements MapADT<K, V>
 		return null;
 	}
 
-	private void growCheck()
-	{
+	private void growCheck() {
         // Percentage of number of elements versus number of buckets at which the array needs to dynamically grow
         float growAmount = 0.75f;
-        if(((float)curNumEntries / (float)hashTableSize) >= growAmount)
-		{
+        if(((float)curNumEntries / (float)hashTableSize) >= growAmount) {
 			List<Entry<K,V>> tmpList;
 			tmpList = new ArrayList<>(curNumEntries);
 
-			for (LinkedList<Entry<K,V>> list : listOfBuckets)
-			{
-				for (Entry<K,V> n : list)
-				{
+			for (LinkedList<Entry<K,V>> list : listOfBuckets) {
+				for (Entry<K,V> n : list) {
 					tmpList.add(new Entry<K,V>(n.key,n.value));
 				}
 			}
@@ -131,30 +113,24 @@ public class HashTable<K extends Comparable<K>, V> implements MapADT<K, V>
 			hashTableSize = findNextPrime(2*hashTableSize);
 			listOfBuckets = new LinkedList[hashTableSize];
 
-			for(int j =0; j<hashTableSize;j++)
-			{
+			for(int j =0; j<hashTableSize;j++) {
 				listOfBuckets[j] = new LinkedList<>();
 			}
 
-			for (int k =0; k< curNumEntries;k++)
-			{
+			for (int k =0; k< curNumEntries;k++) {
 				listOfBuckets[getHashCode(tmpList.get(k).key)].add(new Entry<>(tmpList.get(k).key,tmpList.get(k).value));
 			}
 		}
 	}
 
-	private void shrinkCheck()
-	{
+	private void shrinkCheck() {
         // Percentage of number of elements versus number of buckets at which the array needs to dynamically shrink
         float shrinkAmount = 0.15f;
-        if (((float)curNumEntries / (float)hashTableSize) <= shrinkAmount)
-		{
+        if (((float)curNumEntries / (float)hashTableSize) <= shrinkAmount) {
 			List<Entry<K,V>> tmpList = new ArrayList<>(curNumEntries);
 
-			for (int i = 0; i<hashTableSize;i++)
-			{
-				for (Entry<K,V> n : listOfBuckets[i])
-				{
+			for (int i = 0; i<hashTableSize;i++) {
+				for (Entry<K,V> n : listOfBuckets[i]) {
 					tmpList.add(new Entry<>(n.key,n.value));
 				}
 			}
@@ -164,30 +140,25 @@ public class HashTable<K extends Comparable<K>, V> implements MapADT<K, V>
 
 			listOfBuckets = new LinkedList[hashTableSize];
 
-			for(int j = 0; j < hashTableSize; j++)
-			{
+			for(int j = 0; j < hashTableSize; j++) {
 				listOfBuckets[j] = new LinkedList<>();
 			}
 
-			for (int k = 0; k < curNumEntries; k++)
-			{
+			for (int k = 0; k < curNumEntries; k++) {
 				listOfBuckets[getHashCode(tmpList.get(k).key)].add(new Entry<>(tmpList.get(k).key,tmpList.get(k).value));
 			}
 		}
 	}
 
 	@Override
-	public boolean delete(K key) 
-	{
-		if (null == key)
-		{
+	public boolean delete(K key) {
+		if (null == key) {
 			return false;
 		}
 
 		boolean tmpBool = listOfBuckets[getHashCode(key)].remove(new Entry<>(key,getValue(key)));
 
-		if(tmpBool)
-		{
+		if(tmpBool) {
 			curNumEntries--;
 			shrinkCheck();
 		}
@@ -195,8 +166,7 @@ public class HashTable<K extends Comparable<K>, V> implements MapADT<K, V>
 	}
 
 	@Override
-	public V getValue(K key) 
-	{
+	public V getValue(K key) {
 		V value = null;
 		if (key != null) {
 			for (Entry<K, V> entry : listOfBuckets[getHashCode(key)]) {
@@ -210,8 +180,7 @@ public class HashTable<K extends Comparable<K>, V> implements MapADT<K, V>
 	}
 
 	@Override
-	public K getKey(V value)
-	{
+	public K getKey(V value) {
 		if (null == value)
 		{
 			return null;
@@ -228,20 +197,17 @@ public class HashTable<K extends Comparable<K>, V> implements MapADT<K, V>
 	}
 
 	@Override
-	public int size()
-	{
+	public int size() {
 		return curNumEntries;
 	}
 
 	@Override
-	public boolean isEmpty()
-	{
+	public boolean isEmpty() {
 		return 0 == curNumEntries;
 	}
 
 	@Override
-	public void clear() 
-	{
+	public void clear() {
 		curNumEntries = 0;
 		modCounter = 0;
 		hashTableSize = DEFAULT_SIZE;
@@ -255,25 +221,21 @@ public class HashTable<K extends Comparable<K>, V> implements MapADT<K, V>
 
 
 	@Override
-	public Iterator<K> keys() 
-	{
+	public Iterator<K> keys() {
 		return new KeyIteratorHelper();
 	}
 
 	@Override
-	public Iterator<V> values() 
-	{
+	public Iterator<V> values() {
 		return new ValueIteratorHelper();
 	}
 	
-	private abstract class IteratorHelper<E> implements Iterator<E>
-	{
+	private abstract class IteratorHelper<E> implements Iterator<E> {
 		protected ArrayList<Entry<K,V>> nodes;
 		protected int idx;
 		protected long modCheck;
 
-		public IteratorHelper()
-		{
+		public IteratorHelper() {
 			nodes = new ArrayList<>(curNumEntries);
 			idx = 0;
 			modCheck = modCounter;
@@ -284,8 +246,7 @@ public class HashTable<K extends Comparable<K>, V> implements MapADT<K, V>
 			}
 		}
 		
-		public boolean hasNext()
-		{
+		public boolean hasNext() {
 			if(modCheck != modCounter)
 			{
 				throw new ConcurrentModificationException();
@@ -301,8 +262,7 @@ public class HashTable<K extends Comparable<K>, V> implements MapADT<K, V>
 		}
 	}
 
-	private class KeyIteratorHelper extends IteratorHelper<K>
-	{
+	private class KeyIteratorHelper extends IteratorHelper<K> {
 		public KeyIteratorHelper()
 		{
 			super();
@@ -321,21 +281,18 @@ public class HashTable<K extends Comparable<K>, V> implements MapADT<K, V>
 			super();
 		}
 
-		public V next()
-		{
+		public V next() {
 			V tmpVal = nodes.get(idx).getValue();
 			idx++;
 			return tmpVal;
 		}
 	}
 
-	private class Entry<K extends Comparable<K>, V> implements Comparable<Entry<K,V>>
-	{
+	private class Entry<K extends Comparable<K>, V> implements Comparable<Entry<K,V>> {
 		private K key;
 		private V value;
 
-		public Entry(K k, V v)
-		{
+		public Entry(K k, V v) {
 			key = k;
 			value = v;
 		}
