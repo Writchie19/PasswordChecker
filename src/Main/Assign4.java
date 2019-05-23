@@ -58,9 +58,9 @@ public class Assign4 {
 						val = hash.getValue(x) + 1;
 					}
 					else {
-						val=1;
+						val = 1;
 					}
-					hash.add(x,val);
+					hash.add(x, val);
 				}
 			}
 
@@ -73,8 +73,8 @@ public class Assign4 {
 			Collections.sort(tmpVals);
 			Collections.reverse(tmpVals);
 
-			for(int j =0; j < 20;j++) {
-				writer.write((String)hash.getKey(tmpVals.get(j)));
+			for(int j = 0; j < 20; j++) {
+				writer.write(hash.getKey(tmpVals.get(j)));
 				writer.write("\n");
 				System.out.print(hash.getKey(tmpVals.get(j)));
 				//hash.delete(hash.getKey(tmpVals.get(j)));
